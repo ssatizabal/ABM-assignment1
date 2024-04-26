@@ -90,16 +90,31 @@ class Citizen(mesa.Agent):
             new_pos = self.random.choice(self.empty_neighbors)
             self.model.grid.move_agent(self, new_pos)
 
+    # def update_neighbors(self):
+    #     """
+    #     Look around and see who my neighbors are
+    #     """
+    #     self.neighborhood = self.model.grid.get_neighborhood(
+    #         self.pos, moore=True, radius=self.vision
+    #     )
+    #     self.neighbors = self.model.grid.get_cell_list_contents(self.neighborhood)
+    #     self.empty_neighbors = [
+    #         c for c in self.neighborhood if self.model.grid.is_cell_empty(c)
+    #     ]
+
     def update_neighbors(self):
         """
-        Look around and see who my neighbors are
+        Look around and see who my neighbors are in a hexagonal grid.
         """
+        # Include_center=False to exclude the agent's own cell from the neighborhood
         self.neighborhood = self.model.grid.get_neighborhood(
-            self.pos, moore=True, radius=self.vision
+            self.pos,
+            include_center=False,
+            radius=self.vision
         )
         self.neighbors = self.model.grid.get_cell_list_contents(self.neighborhood)
         self.empty_neighbors = [
-            c for c in self.neighborhood if self.model.grid.is_cell_empty(c)
+            pos for pos in self.neighborhood if self.model.grid.is_cell_empty(pos)
         ]
 
     def update_estimated_arrest_probability(self):
@@ -191,14 +206,29 @@ class Cop(mesa.Agent):
             new_pos = self.random.choice(self.empty_neighbors)
             self.model.grid.move_agent(self, new_pos)
 
+    # def update_neighbors(self):
+    #     """
+    #     Look around and see who my neighbors are.
+    #     """
+    #     self.neighborhood = self.model.grid.get_neighborhood(
+    #         self.pos, moore=True, radius=self.vision
+    #     )
+    #     self.neighbors = self.model.grid.get_cell_list_contents(self.neighborhood)
+    #     self.empty_neighbors = [
+    #         c for c in self.neighborhood if self.model.grid.is_cell_empty(c)
+    #     ]
+
     def update_neighbors(self):
         """
-        Look around and see who my neighbors are.
+        Look around and see who my neighbors are in a hexagonal grid.
         """
+        # Include_center=False to exclude the agent's own cell from the neighborhood
         self.neighborhood = self.model.grid.get_neighborhood(
-            self.pos, moore=True, radius=self.vision
+            self.pos,
+            include_center=False,
+            radius=self.vision
         )
         self.neighbors = self.model.grid.get_cell_list_contents(self.neighborhood)
         self.empty_neighbors = [
-            c for c in self.neighborhood if self.model.grid.is_cell_empty(c)
+            pos for pos in self.neighborhood if self.model.grid.is_cell_empty(pos)
         ]

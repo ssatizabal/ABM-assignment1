@@ -43,6 +43,7 @@ class EpsteinCivilViolence(mesa.Model):
         arrest_prob_constant=2.3,
         movement=True,
         max_iters=1000,
+        updating_scheme="RandomActivation"
     ):
         super().__init__()
         self.width = width
@@ -58,8 +59,18 @@ class EpsteinCivilViolence(mesa.Model):
         self.movement = movement
         self.max_iters = max_iters
         self.iteration = 0
-        self.schedule = mesa.time.RandomActivation(self)
-        self.grid = mesa.space.SingleGrid(width, height, torus=True)
+        self.grid = mesa.space.HexGrid(width, height, torus=True)
+
+        if updating_scheme == "RandomActivation":
+            self.schedule = mesa.time.RandomActivation(self)
+        elif updating_scheme == "SimultaneousActivation":
+            self.schedule = mesa.time.SimultaneousActivation(self)
+        elif updating_scheme == "StagedActivation":
+            self.schedule = mesa.time.StagedActivation(self, stage_list=['step', 'advance'])
+        elif updating_scheme == "BaseScheduler":
+            self.schedule = mesa.time.BaseScheduler(self)
+        else:
+            raise ValueError("Invalid updating scheme")
 
         model_reporters = {
             "Quiescent": lambda m: self.count_type_citizens(m, "Quiescent"),

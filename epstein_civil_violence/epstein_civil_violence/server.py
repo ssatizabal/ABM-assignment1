@@ -2,6 +2,8 @@ import mesa
 
 from .agent import Citizen, Cop
 from .model import EpsteinCivilViolence
+from mesa.visualization.modules import CanvasHexGrid
+from mesa.visualization.UserParam import Choice
 
 COP_COLOR = "#000000"
 AGENT_QUIET_COLOR = "#648FFF"
@@ -44,6 +46,11 @@ def citizen_cop_portrayal(agent):
 
     return portrayal
 
+updating_scheme_param = Choice(
+    "Updating Scheme",
+    choices=["RandomActivation", "SimultaneousActivation", "StagedActivation", "BaseScheduler"],
+    value="RandomActivation"
+)
 
 model_params = {
     "height": 40,
@@ -60,8 +67,10 @@ model_params = {
         "Government Legitimacy", 0.82, 0.0, 1, 0.01
     ),
     "max_jail_term": mesa.visualization.Slider("Max Jail Term", 30, 0, 50, 1),
+    "updating_scheme": updating_scheme_param
 }
-canvas_element = mesa.visualization.CanvasGrid(citizen_cop_portrayal, 40, 40, 480, 480)
+# canvas_element = mesa.visualization.CanvasGrid(citizen_cop_portrayal, 40, 40, 480, 480)
+canvas_element = CanvasHexGrid(citizen_cop_portrayal, 40, 40, 480, 480)
 chart = mesa.visualization.ChartModule(
     [
         {"Label": "Quiescent", "Color": "#648FFF"},
@@ -70,12 +79,11 @@ chart = mesa.visualization.ChartModule(
     ],
     data_collector_name="datacollector",
 )
+
+
 server = mesa.visualization.ModularServer(
     EpsteinCivilViolence,
-    [
-        canvas_element,
-        chart,
-    ],
+    [canvas_element, chart],
     "Epstein Civil Violence",
-    model_params,
+    model_params
 )
