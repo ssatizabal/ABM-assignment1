@@ -1,5 +1,5 @@
 import mesa
-
+import numpy as np
 from .agent import Citizen, Cop
 
 
@@ -37,7 +37,12 @@ class EpsteinCivilViolence(mesa.Model):
         cop_density=0.074,
         citizen_vision=7,
         cop_vision=7,
-        legitimacy=0.8,
+        legitimacy_distribution='uniform',
+        #legitimacy_param_uniform=(0, 1),  # Assuming this is a tuple (min, max)
+        legitimacy_param_normal_mean=0.5,
+        legitimacy_param_normal_stddev=0.1,
+        legitimacy_param_gamma_shape=2,
+        legitimacy_param_gamma_scale=2,
         max_jail_term=1000,
         active_threshold=0.1,
         arrest_prob_constant=2.3,
@@ -52,7 +57,13 @@ class EpsteinCivilViolence(mesa.Model):
         self.cop_density = cop_density
         self.citizen_vision = citizen_vision
         self.cop_vision = cop_vision
-        self.legitimacy = legitimacy
+        #self.legitimacy = legitimacy
+        self.legitimacy_distribution = legitimacy_distribution
+        self.legitimacy_params = {
+            'uniform': (0,1),
+            'normal': (legitimacy_param_normal_mean, legitimacy_param_normal_stddev),
+            'gamma': (legitimacy_param_gamma_shape, legitimacy_param_gamma_scale)
+        }
         self.max_jail_term = max_jail_term
         self.active_threshold = active_threshold
         self.arrest_prob_constant = arrest_prob_constant
@@ -93,6 +104,7 @@ class EpsteinCivilViolence(mesa.Model):
         if self.cop_density + self.citizen_density > 1:
             raise ValueError("Cop density + citizen density must be less than 1")
         for contents, (x, y) in self.grid.coord_iter():
+            legitimacy = self.generate_legitimacy() ### this is new
             if self.random.random() < self.cop_density:
                 cop = Cop(unique_id, self, (x, y), vision=self.cop_vision)
                 unique_id += 1
@@ -104,7 +116,7 @@ class EpsteinCivilViolence(mesa.Model):
                     self,
                     (x, y),
                     hardship=self.random.random(),
-                    regime_legitimacy=self.legitimacy,
+                    regime_legitimacy=legitimacy,
                     risk_aversion=self.random.random(),
                     threshold=self.active_threshold,
                     vision=self.citizen_vision,
@@ -169,3 +181,16 @@ class EpsteinCivilViolence(mesa.Model):
             if agent.breed == "cop":
                 count += 1
         return count
+    
+    def generate_legitimacy(self):
+        params = self.legitimacy_params[self.legitimacy_distribution]
+        if self.legitimacy_distribution == 'uniform':
+            return np.random.uniform(0,1)
+        elif self.legitimacy_distribution == 'normal':
+            return np.clip(np.random.normal(*params), 0, 1)
+        elif self.legitimacy_distribution == 'gamma':
+            value = np.random.gamma(*params)
+            return np.clip(value / (value + 1), 0, 1)  # Normalize to [0, 1]
+        else:
+            raise ValueError("Invalid distribution type")
+

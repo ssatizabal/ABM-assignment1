@@ -52,6 +52,21 @@ updating_scheme_param = Choice(
     value="RandomActivation"
 )
 
+#### Government Legitimacy distributions and parameters
+
+legitimacy_dist_param = Choice(
+    "Legitimacy Distribution",
+    choices=["uniform", "normal", "gamma"],
+    value="uniform"
+)
+
+#legitimacy_param_uniform = mesa.visualization.Slider("Uniform Min-Max", 0.0, 0.0, 1.0, 0.05)
+legitimacy_param_normal_mean = mesa.visualization.Slider("Normal Mean", 0.5, 0.0, 1.0, 0.05)
+legitimacy_param_normal_stddev = mesa.visualization.Slider("Normal StdDev", 0.1, 0.01, 0.5, 0.01)
+gamma_shape = mesa.visualization.Slider("Gamma Shape", 2, 0.5, 5.0, 0.1)
+gamma_scale = mesa.visualization.Slider("Gamma Scale", 2, 0.5, 5.0, 0.1)
+
+
 model_params = {
     "height": 40,
     "width": 40,
@@ -63,9 +78,15 @@ model_params = {
     ),
     "citizen_vision": mesa.visualization.Slider("Citizen Vision", 7, 1, 10, 1),
     "cop_vision": mesa.visualization.Slider("Cop Vision", 7, 1, 10, 1),
-    "legitimacy": mesa.visualization.Slider(
-        "Government Legitimacy", 0.82, 0.0, 1, 0.01
-    ),
+    # "legitimacy": mesa.visualization.Slider(
+    #     "Government Legitimacy", 0.82, 0.0, 1, 0.01
+    # ),
+    "legitimacy_distribution": legitimacy_dist_param, ### This is new
+    # "legitimacy_param_uniform": legitimacy_param_uniform,
+    "legitimacy_param_normal_mean": legitimacy_param_normal_mean,
+    "legitimacy_param_normal_stddev": legitimacy_param_normal_stddev,
+    "legitimacy_param_gamma_shape": gamma_shape,
+    "legitimacy_param_gamma_scale": gamma_scale,  #### This is new
     "max_jail_term": mesa.visualization.Slider("Max Jail Term", 30, 0, 50, 1),
     "updating_scheme": updating_scheme_param
 }
