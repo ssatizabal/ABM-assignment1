@@ -4,6 +4,7 @@ from .agent import Citizen, Cop
 from .model import EpsteinCivilViolence
 from mesa.visualization.modules import CanvasHexGrid
 from mesa.visualization.UserParam import Choice
+from mesa.visualization.modules import ChartModule
 
 COP_COLOR = "#000000"
 AGENT_QUIET_COLOR = "#648FFF"
@@ -56,50 +57,53 @@ updating_scheme_param = Choice(
 
 legitimacy_dist_param = Choice(
     "Legitimacy Distribution",
-    choices=["uniform", "normal", "gamma"],
+    choices=["uniform", "normal"],  # Removed "gamma" from the choices
     value="uniform"
 )
 
-#legitimacy_param_uniform = mesa.visualization.Slider("Uniform Min-Max", 0.0, 0.0, 1.0, 0.05)
 legitimacy_param_normal_mean = mesa.visualization.Slider("Normal Mean", 0.5, 0.0, 1.0, 0.05)
 legitimacy_param_normal_stddev = mesa.visualization.Slider("Normal StdDev", 0.1, 0.01, 0.5, 0.01)
-gamma_shape = mesa.visualization.Slider("Gamma Shape", 2, 0.5, 5.0, 0.1)
-gamma_scale = mesa.visualization.Slider("Gamma Scale", 2, 0.5, 5.0, 0.1)
+
+#### 
+international_aid_param = Choice(
+"International Aid",
+choices=["No Aid", "Aid Government", "Aid Rebellion"],
+value="No Aid"
+)
+
+shock_amount = mesa.visualization.Slider("Shock Amount", 0.1, 0.1, 0.5, 0.1) 
 
 
 model_params = {
     "height": 40,
     "width": 40,
-    "citizen_density": mesa.visualization.Slider(
-        "Initial Agent Density", 0.7, 0.0, 0.9, 0.1
-    ),
-    "cop_density": mesa.visualization.Slider(
-        "Initial Cop Density", 0.04, 0.0, 0.1, 0.01
-    ),
+    "citizen_density": mesa.visualization.Slider("Initial Agent Density", 0.7, 0.0, 0.9, 0.1),
+    "cop_density": mesa.visualization.Slider("Initial Cop Density", 0.04, 0.0, 0.1, 0.01),
     "citizen_vision": mesa.visualization.Slider("Citizen Vision", 7, 1, 10, 1),
     "cop_vision": mesa.visualization.Slider("Cop Vision", 7, 1, 10, 1),
-    # "legitimacy": mesa.visualization.Slider(
-    #     "Government Legitimacy", 0.82, 0.0, 1, 0.01
-    # ),
-    "legitimacy_distribution": legitimacy_dist_param, ### This is new
-    # "legitimacy_param_uniform": legitimacy_param_uniform,
+    "legitimacy_distribution": legitimacy_dist_param,
     "legitimacy_param_normal_mean": legitimacy_param_normal_mean,
     "legitimacy_param_normal_stddev": legitimacy_param_normal_stddev,
-    "legitimacy_param_gamma_shape": gamma_shape,
-    "legitimacy_param_gamma_scale": gamma_scale,  #### This is new
     "max_jail_term": mesa.visualization.Slider("Max Jail Term", 30, 0, 50, 1),
-    "updating_scheme": updating_scheme_param
+    "international_aid": international_aid_param,
+    "shock_amount": shock_amount
 }
+
+
+
 # canvas_element = mesa.visualization.CanvasGrid(citizen_cop_portrayal, 40, 40, 480, 480)
 canvas_element = CanvasHexGrid(citizen_cop_portrayal, 40, 40, 480, 480)
-chart = mesa.visualization.ChartModule(
+chart = ChartModule(
     [
         {"Label": "Quiescent", "Color": "#648FFF"},
         {"Label": "Active", "Color": "#FE6100"},
         {"Label": "Jailed", "Color": "#808080"},
     ],
     data_collector_name="datacollector",
+    canvas_height=300,
+    canvas_width=500
 )
+
 
 
 server = mesa.visualization.ModularServer(

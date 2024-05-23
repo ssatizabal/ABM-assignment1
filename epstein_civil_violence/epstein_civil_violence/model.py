@@ -38,17 +38,15 @@ class EpsteinCivilViolence(mesa.Model):
         citizen_vision=7,
         cop_vision=7,
         legitimacy_distribution='uniform',
-        #legitimacy_param_uniform=(0, 1),  # Assuming this is a tuple (min, max)
         legitimacy_param_normal_mean=0.5,
         legitimacy_param_normal_stddev=0.1,
-        legitimacy_param_gamma_shape=2,
-        legitimacy_param_gamma_scale=2,
         max_jail_term=1000,
         active_threshold=0.1,
         arrest_prob_constant=2.3,
         movement=True,
         max_iters=1000,
-        updating_scheme="RandomActivation"
+        international_aid="No Aid",
+        shock_amount=0.0,
     ):
         super().__init__()
         self.width = width
@@ -60,9 +58,8 @@ class EpsteinCivilViolence(mesa.Model):
         #self.legitimacy = legitimacy
         self.legitimacy_distribution = legitimacy_distribution
         self.legitimacy_params = {
-            'uniform': (0,1),
-            'normal': (legitimacy_param_normal_mean, legitimacy_param_normal_stddev),
-            'gamma': (legitimacy_param_gamma_shape, legitimacy_param_gamma_scale)
+            'uniform': (0, 1),
+            'normal': (legitimacy_param_normal_mean, legitimacy_param_normal_stddev)
         }
         self.max_jail_term = max_jail_term
         self.active_threshold = active_threshold
@@ -71,24 +68,17 @@ class EpsteinCivilViolence(mesa.Model):
         self.max_iters = max_iters
         self.iteration = 0
         self.grid = mesa.space.HexGrid(width, height, torus=True)
-
-        if updating_scheme == "RandomActivation":
-            self.schedule = mesa.time.RandomActivation(self)
-        elif updating_scheme == "SimultaneousActivation":
-            self.schedule = mesa.time.SimultaneousActivation(self)
-        elif updating_scheme == "StagedActivation":
-            self.schedule = mesa.time.StagedActivation(self, stage_list=['step', 'advance'])
-        elif updating_scheme == "BaseScheduler":
-            self.schedule = mesa.time.BaseScheduler(self)
-        else:
-            raise ValueError("Invalid updating scheme")
+        self.schedule = mesa.time.RandomActivation(self)
+        self.international_aid = international_aid
+        self.shock_amount = shock_amount
+        self.aid_applied = False
 
         model_reporters = {
             "Quiescent": lambda m: self.count_type_citizens(m, "Quiescent"),
             "Active": lambda m: self.count_type_citizens(m, "Active"),
             "Jailed": self.count_jailed,
-            "Cops": self.count_cops,
         }
+
         agent_reporters = {
             "x": lambda a: a.pos[0],
             "y": lambda a: a.pos[1],
@@ -133,6 +123,11 @@ class EpsteinCivilViolence(mesa.Model):
         Advance the model by one step and collect data.
         """
         ###
+        
+        if not self.aid_applied and self.iteration == 100:
+            self.adjust_legitimacy_based_on_aid()
+            self.aid_applied = True
+            
         for agent in self.schedule.agents:
             if isinstance(agent, Citizen):
                 agent.update_neighbors() 
@@ -185,12 +180,22 @@ class EpsteinCivilViolence(mesa.Model):
     def generate_legitimacy(self):
         params = self.legitimacy_params[self.legitimacy_distribution]
         if self.legitimacy_distribution == 'uniform':
-            return np.random.uniform(0,1)
+            return np.random.uniform(*params)
         elif self.legitimacy_distribution == 'normal':
             return np.clip(np.random.normal(*params), 0, 1)
-        elif self.legitimacy_distribution == 'gamma':
-            value = np.random.gamma(*params)
-            return np.clip(value / (value + 1), 0, 1)  # Normalize to [0, 1]
         else:
             raise ValueError("Invalid distribution type")
 
+    def adjust_legitimacy_based_on_aid(self):
+        """ Adjust legitimacy based on the selected international aid and ensures the 
+        shock is applied only once. """
+        if self.international_aid == "Aid Government":
+            for agent in self.schedule.agents:
+                if isinstance(agent, Citizen):
+                    agent.regime_legitimacy += self.shock_amount  
+                    agent.regime_legitimacy = min(agent.regime_legitimacy, 1)  
+        elif self.international_aid == "Aid Rebellion":
+            for agent in self.schedule.agents:
+                if isinstance(agent, Citizen):
+                    agent.regime_legitimacy -= self.shock_amount  
+                    agent.regime_legitimacy = max(agent.regime_legitimacy, 0)  
